@@ -18,6 +18,7 @@
 
 class QListWidget;
 class QListWidgetItem;
+class QKeyEvent;
 
 namespace edbee {
 
@@ -76,6 +77,7 @@ protected:
     //void moveEvent(QMoveEvent *event);
 
     void insertCurrentSelectedListItem();
+    bool sendKeyEventTo(QWidget* target, QKeyEvent* sourceEvent);
 signals:
 
 public slots:
