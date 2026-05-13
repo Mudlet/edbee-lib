@@ -37,6 +37,7 @@ SET(SOURCES
   edbee/util/rangesetlineiteratortest.cpp
   edbee/models/dynamicvariablestest.cpp
   edbee/util/rangelineiteratortest.cpp
+  edbee/views/texteditorautocompletecomponenttest.cpp
   edbee/views/textthememanagertest.cpp
 )
 
@@ -67,6 +68,7 @@ SET(HEADERS
   edbee/util/rangesetlineiteratortest.h
   edbee/models/dynamicvariablestest.h
   edbee/util/rangelineiteratortest.h
+  edbee/views/texteditorautocompletecomponenttest.h
   edbee/views/textthememanagertest.h
 )
 

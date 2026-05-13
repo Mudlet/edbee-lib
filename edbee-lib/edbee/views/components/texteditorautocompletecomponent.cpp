@@ -50,10 +50,15 @@ TextEditorAutoCompleteComponent::TextEditorAutoCompleteComponent(TextEditorContr
     this->setAttribute(Qt::WA_ShowWithoutActivating);
 
     menuRef_ = new QMenu(this);
+    menuRef_->setFocusPolicy(Qt::NoFocus);
+    menuRef_->setAttribute(Qt::WA_ShowWithoutActivating);
     menuRef_->setAccessibleName("Autocomplete");
 
     listWidgetRef_ = new QListWidget(menuRef_);
+    listWidgetRef_->setFocusPolicy(Qt::NoFocus);
+    listWidgetRef_->setAttribute(Qt::WA_ShowWithoutActivating);
 
+    editorComponentRef_->installEventFilter(this);
     listWidgetRef_->installEventFilter(this);
 
     menuRef_->installEventFilter(this);
@@ -327,6 +332,16 @@ void TextEditorAutoCompleteComponent::hideEvent(QHideEvent* event)
 }
 
 
+void TextEditorAutoCompleteComponent::sendKeyEventTo(QWidget* target, QKeyEvent* sourceEvent)
+{
+    QKeyEvent event(sourceEvent->type(), sourceEvent->key(), sourceEvent->modifiers(), sourceEvent->text(), sourceEvent->isAutoRepeat(), sourceEvent->count());
+
+    eventBeingFiltered_ = true;
+    QApplication::sendEvent(target, &event);
+    eventBeingFiltered_ = false;
+}
+
+
 /// we need to intercept keypresses if the widget is visible
 bool TextEditorAutoCompleteComponent::eventFilter(QObject *obj, QEvent *event)
 {
@@ -336,14 +351,22 @@ bool TextEditorAutoCompleteComponent::eventFilter(QObject *obj, QEvent *event)
         return QObject::eventFilter(obj, event);
     }
 
-    if(obj == listWidgetRef_ && event->type() == QEvent::KeyPress) {
+    if (eventBeingFiltered_) {
+        return QObject::eventFilter(obj, event);
+    }
+
+    if ((obj == editorComponentRef_ || obj == listWidgetRef_ || obj == menuRef_) && event->type() == QEvent::KeyPress && menuRef_->isVisible()) {
         QKeyEvent* key = static_cast<QKeyEvent*>(event);
+        const bool editorHasEvent = obj == editorComponentRef_;
 
         // text keys are allowed
         if (!key->text().isEmpty()) {
             QChar nextChar = key->text().at(0);
             if (nextChar.isLetterOrNumber()) {
-              QApplication::sendEvent(editorComponentRef_, event);
+              if (editorHasEvent) {
+                  return false;
+              }
+              sendKeyEventTo(editorComponentRef_, key);
               return true;
             }
         }
@@ -360,7 +383,10 @@ bool TextEditorAutoCompleteComponent::eventFilter(QObject *obj, QEvent *event)
             case Qt::Key_Tab:
                 if (listWidgetRef_->currentItem() && currentWord_ == listWidgetRef_->currentItem()->text()) { // sends normal enter/return/tab if you've typed a full word
                     menuRef_->close();
-                    QApplication::sendEvent(editorComponentRef_, event);
+                    if (editorHasEvent) {
+                        return false;
+                    }
+                    sendKeyEventTo(editorComponentRef_, key);
                     return true;
                 } else if (listWidgetRef_->currentItem()) {
                     insertCurrentSelectedListItem();
@@ -371,11 +397,17 @@ bool TextEditorAutoCompleteComponent::eventFilter(QObject *obj, QEvent *event)
                 break;
 
             case Qt::Key_Backspace:
-                QApplication::sendEvent(editorComponentRef_, event);
+                if (editorHasEvent) {
+                    return false;
+                }
+                sendKeyEventTo(editorComponentRef_, key);
                 return true;
 
             case Qt::Key_Shift: //ignore shift, don't hide
-                QApplication::sendEvent(editorComponentRef_, event);
+                if (editorHasEvent) {
+                    return false;
+                }
+                sendKeyEventTo(editorComponentRef_, key);
                 return true;
 
             // forward special keys to list
@@ -383,12 +415,19 @@ bool TextEditorAutoCompleteComponent::eventFilter(QObject *obj, QEvent *event)
             case Qt::Key_Down:
             case Qt::Key_PageDown:
             case Qt::Key_PageUp:
+                if (editorHasEvent || obj == menuRef_) {
+                    sendKeyEventTo(listWidgetRef_, key);
+                    return true;
+                }
                 return false;
         }
 
         // default operation is to hide and continue the event
         menuRef_->close();
-        QApplication::sendEvent(editorComponentRef_, event);
+        if (editorHasEvent) {
+            return false;
+        }
+        sendKeyEventTo(editorComponentRef_, key);
         return true;
 
     }
@@ -428,7 +467,6 @@ void TextEditorAutoCompleteComponent::updateList()
     // fills the autocomplete list with the curent word
     if (fillAutoCompleteList(doc, range, currentWord_)) {
         menuRef_->popup(menuRef_->pos());
-        listWidgetRef_->setFocus();
 
         // position the widget
         showInfoTip();
