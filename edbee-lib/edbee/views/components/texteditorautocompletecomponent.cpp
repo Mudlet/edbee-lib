@@ -51,8 +51,12 @@ TextEditorAutoCompleteComponent::TextEditorAutoCompleteComponent(TextEditorContr
 
     menuRef_ = new QMenu(this);
     menuRef_->setAccessibleName("Autocomplete");
+    menuRef_->setFocusPolicy(Qt::NoFocus);
+    menuRef_->setAttribute(Qt::WA_ShowWithoutActivating);
 
     listWidgetRef_ = new QListWidget(menuRef_);
+    listWidgetRef_->setFocusPolicy(Qt::NoFocus);
+    listWidgetRef_->setAttribute(Qt::WA_ShowWithoutActivating);
 
     listWidgetRef_->installEventFilter(this);
 
@@ -336,15 +340,15 @@ bool TextEditorAutoCompleteComponent::eventFilter(QObject *obj, QEvent *event)
         return QObject::eventFilter(obj, event);
     }
 
-    if(obj == listWidgetRef_ && event->type() == QEvent::KeyPress) {
+    if ((obj == listWidgetRef_ || obj == menuRef_) && event->type() == QEvent::KeyPress) {
         QKeyEvent* key = static_cast<QKeyEvent*>(event);
 
         // text keys are allowed
         if (!key->text().isEmpty()) {
             QChar nextChar = key->text().at(0);
             if (nextChar.isLetterOrNumber()) {
-              QApplication::sendEvent(editorComponentRef_, event);
-              return true;
+                QApplication::sendEvent(editorComponentRef_, event);
+                return true;
             }
         }
 
@@ -383,6 +387,10 @@ bool TextEditorAutoCompleteComponent::eventFilter(QObject *obj, QEvent *event)
             case Qt::Key_Down:
             case Qt::Key_PageDown:
             case Qt::Key_PageUp:
+                if (obj == menuRef_) {
+                    QApplication::sendEvent(listWidgetRef_, event);
+                    return true;
+                }
                 return false;
         }
 
