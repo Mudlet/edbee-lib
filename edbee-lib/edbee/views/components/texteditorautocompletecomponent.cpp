@@ -336,7 +336,7 @@ bool TextEditorAutoCompleteComponent::eventFilter(QObject *obj, QEvent *event)
         return QObject::eventFilter(obj, event);
     }
 
-    if(obj == listWidgetRef_ && event->type() == QEvent::KeyPress) {
+    if ((obj == listWidgetRef_ || obj == menuRef_) && event->type() == QEvent::KeyPress) {
         QKeyEvent* key = static_cast<QKeyEvent*>(event);
 
         // text keys are allowed
