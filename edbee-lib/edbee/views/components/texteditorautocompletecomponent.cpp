@@ -360,7 +360,7 @@ bool TextEditorAutoCompleteComponent::eventFilter(QObject *obj, QEvent *event)
         return QObject::eventFilter(obj, event);
     }
 
-    if ((obj == editorComponentRef_ || obj == listWidgetRef_ || obj == menuRef_) && event->type() == QEvent::KeyPress && menuRef_->isVisible()) {
+    if ((obj == editorComponentRef_ || obj == listWidgetRef_) && event->type() == QEvent::KeyPress && menuRef_->isVisible()) {
         QKeyEvent* key = static_cast<QKeyEvent*>(event);
         const bool editorHasEvent = obj == editorComponentRef_;
 
@@ -420,7 +420,7 @@ bool TextEditorAutoCompleteComponent::eventFilter(QObject *obj, QEvent *event)
             case Qt::Key_Down:
             case Qt::Key_PageDown:
             case Qt::Key_PageUp:
-                if (editorHasEvent || obj == menuRef_) {
+                if (editorHasEvent) {
                     sendKeyEventTo(listWidgetRef_, key);
                     return true;
                 }

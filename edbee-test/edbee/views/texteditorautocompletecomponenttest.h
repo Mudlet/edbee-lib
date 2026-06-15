@@ -14,6 +14,7 @@ class TextEditorAutoCompleteComponentTest : public edbee::test::TestCase
 private slots:
     void openingAutocompleteKeepsEditorFocused();
     void typingContinuesThroughEditorWhenAutocompleteIsVisible();
+    void typingStillRoutesThroughEditorWhenListGetsFocus();
     void navigationKeysMoveSelectionWithoutListFocus();
     void escapeCancelsAutocompleteUntilWordIsCleared();
     void hidingAutocompleteDoesNotStealFocusFromSiblingWidget();

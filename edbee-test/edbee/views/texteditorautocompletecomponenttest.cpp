@@ -59,10 +59,13 @@ public:
         QApplication::processEvents();
     }
 
-    void sendListKey(int key, const QString& text = QString())
+    void sendFocusedWidgetKey(int key, const QString& text = QString())
     {
+        QWidget* target = QApplication::focusWidget();
+        Q_ASSERT(target != nullptr);
+
         QKeyEvent keyEvent(QEvent::KeyPress, key, Qt::NoModifier, text);
-        QApplication::sendEvent(list, &keyEvent);
+        QApplication::sendEvent(target, &keyEvent);
         QApplication::processEvents();
     }
 
@@ -108,6 +111,25 @@ void TextEditorAutoCompleteComponentTest::typingContinuesThroughEditorWhenAutoco
     testEqual(fixture.widget.textDocument()->text(), "comp");
     testTrue(fixture.editor->hasFocus());
     testFalse(fixture.list->hasFocus());
+}
+
+
+void TextEditorAutoCompleteComponentTest::typingStillRoutesThroughEditorWhenListGetsFocus()
+{
+    AutoCompleteFixture fixture;
+    fixture.typePrefix("com");
+
+    fixture.list->setFocusPolicy(Qt::StrongFocus);
+    fixture.list->setFocus();
+    QApplication::processEvents();
+
+    testTrue(fixture.list->hasFocus());
+    testTrue(QApplication::focusWidget() == fixture.list);
+
+    fixture.sendFocusedWidgetKey(Qt::Key_P, "p");
+
+    testEqual(fixture.widget.textDocument()->text(), "comp");
+    testTrue(fixture.list->hasFocus());
 }
 
 
@@ -185,14 +207,18 @@ void TextEditorAutoCompleteComponentTest::hidingAutocompleteDoesNotStealFocusFro
     sibling->setFocus();
     QApplication::processEvents();
     testTrue(sibling->hasFocus());
+    testTrue(QApplication::focusWidget() == sibling);
 
     QKeyEvent escapeKey(QEvent::KeyPress, Qt::Key_Escape, Qt::NoModifier);
-    QApplication::sendEvent(list, &escapeKey);
+    QWidget* focusWidget = QApplication::focusWidget();
+    Q_ASSERT(focusWidget != nullptr);
+    QApplication::sendEvent(focusWidget, &escapeKey);
     QApplication::processEvents();
 
     testTrue(sibling->hasFocus());
     testFalse(editor->hasFocus());
     testFalse(list->hasFocus());
+    testFalse(list->isVisible());
 }
 
 } // namespace edbee
