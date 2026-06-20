@@ -18,6 +18,7 @@
 
 class QListWidget;
 class QListWidgetItem;
+class QKeyEvent;
 
 namespace edbee {
 
@@ -70,6 +71,7 @@ protected:
     
     void positionWidgetForCaretOffset(size_t offset);
     bool eventFilter(QObject* obj, QEvent* event);
+    bool handleAutoCompleteKeyPress(QKeyEvent* key, bool eventFromEditor);
 
     void hideEvent(QHideEvent* event);
     //void focusOutEvent(QFocusEvent *event);

@@ -50,7 +50,8 @@ SOURCES += \
   edbee/util/rangesetlineiteratortest.cpp \
   edbee/models/dynamicvariablestest.cpp \
   edbee/util/rangelineiteratortest.cpp \
-  edbee/views/textthememanagertest.cpp
+  edbee/views/textthememanagertest.cpp \
+  edbee/views/texteditorautocompletecomponenttest.cpp
 
 HEADERS += \
 	edbee/commands/replaceselectioncommandtest.h \
@@ -79,7 +80,8 @@ HEADERS += \
   edbee/util/rangesetlineiteratortest.h \
   edbee/models/dynamicvariablestest.h \
   edbee/util/rangelineiteratortest.h \
-  edbee/views/textthememanagertest.h
+  edbee/views/textthememanagertest.h \
+  edbee/views/texteditorautocompletecomponenttest.h
 
 ##OTHER_FILES += ../edbee-data/config/*
 ##OTHER_FILES += ../edbee-data/keymaps/*
@@ -114,4 +116,3 @@ else:LIBNAME=libedbee.a
 win32:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../edbee-lib/release/$$LIBNAME
 else:win32:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../edbee-lib/debug/$$LIBNAME
 else:unix:!symbian: PRE_TARGETDEPS += $$OUT_PWD/../edbee-lib/$$LIBNAME
-
