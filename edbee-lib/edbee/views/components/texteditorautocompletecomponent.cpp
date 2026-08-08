@@ -323,6 +323,10 @@ void TextEditorAutoCompleteComponent::positionWidgetForCaretOffset(size_t offset
 void TextEditorAutoCompleteComponent::hideEvent(QHideEvent* event)
 {
     infoTipRef_->hide();
+    // Restore focus to the editor when autocomplete is hidden
+    if (editorComponentRef_) {
+        editorComponentRef_->setFocus();
+    }
     event->isAccepted();
 }
 
@@ -353,6 +357,7 @@ bool TextEditorAutoCompleteComponent::eventFilter(QObject *obj, QEvent *event)
             case Qt::Key_Escape:
                 menuRef_->close();
                 canceled_ = true;
+                editorComponentRef_->setFocus();
                 return true; // stop event
 
             case Qt::Key_Enter:
@@ -360,6 +365,7 @@ bool TextEditorAutoCompleteComponent::eventFilter(QObject *obj, QEvent *event)
             case Qt::Key_Tab:
                 if (listWidgetRef_->currentItem() && currentWord_ == listWidgetRef_->currentItem()->text()) { // sends normal enter/return/tab if you've typed a full word
                     menuRef_->close();
+                    editorComponentRef_->setFocus();
                     QApplication::sendEvent(editorComponentRef_, event);
                     return true;
                 } else if (listWidgetRef_->currentItem()) {
@@ -388,6 +394,7 @@ bool TextEditorAutoCompleteComponent::eventFilter(QObject *obj, QEvent *event)
 
         // default operation is to hide and continue the event
         menuRef_->close();
+        editorComponentRef_->setFocus();
         QApplication::sendEvent(editorComponentRef_, event);
         return true;
 
