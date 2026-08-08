@@ -37,6 +37,7 @@ SET(SOURCES
   edbee/util/rangesetlineiteratortest.cpp
   edbee/models/dynamicvariablestest.cpp
   edbee/util/rangelineiteratortest.cpp
+  edbee/views/texteditorautocompletecomponenttest.cpp
   edbee/views/textthememanagertest.cpp
 )
 
@@ -67,6 +68,7 @@ SET(HEADERS
   edbee/util/rangesetlineiteratortest.h
   edbee/models/dynamicvariablestest.h
   edbee/util/rangelineiteratortest.h
+  edbee/views/texteditorautocompletecomponenttest.h
   edbee/views/textthememanagertest.h
 )
 
@@ -85,4 +87,3 @@ ADD_EXECUTABLE(edbee-test
 TARGET_LINK_LIBRARIES(edbee-test edbee-lib ${QT_LIBS})
 
 set_target_properties(edbee-test PROPERTIES AUTOMOC ON CXX_STANDARD 11)
-
