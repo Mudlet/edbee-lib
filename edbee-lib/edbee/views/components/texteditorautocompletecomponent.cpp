@@ -50,10 +50,15 @@ TextEditorAutoCompleteComponent::TextEditorAutoCompleteComponent(TextEditorContr
     this->setAttribute(Qt::WA_ShowWithoutActivating);
 
     menuRef_ = new QMenu(this);
+    menuRef_->setFocusPolicy(Qt::NoFocus);
+    menuRef_->setAttribute(Qt::WA_ShowWithoutActivating);
     menuRef_->setAccessibleName("Autocomplete");
 
     listWidgetRef_ = new QListWidget(menuRef_);
+    listWidgetRef_->setFocusPolicy(Qt::NoFocus);
+    listWidgetRef_->setAttribute(Qt::WA_ShowWithoutActivating);
 
+    editorComponentRef_->installEventFilter(this);
     listWidgetRef_->installEventFilter(this);
 
     menuRef_->installEventFilter(this);
@@ -336,63 +341,83 @@ bool TextEditorAutoCompleteComponent::eventFilter(QObject *obj, QEvent *event)
         return QObject::eventFilter(obj, event);
     }
 
+    if (obj == editorComponentRef_ && event->type() == QEvent::KeyPress && menuRef_->isVisible()) {
+        return handleAutoCompleteKeyPress(static_cast<QKeyEvent*>(event), true);
+    }
+
     if(obj == listWidgetRef_ && event->type() == QEvent::KeyPress) {
-        QKeyEvent* key = static_cast<QKeyEvent*>(event);
-
-        // text keys are allowed
-        if (!key->text().isEmpty()) {
-            QChar nextChar = key->text().at(0);
-            if (nextChar.isLetterOrNumber()) {
-              QApplication::sendEvent(editorComponentRef_, event);
-              return true;
-            }
-        }
-
-        // escape key
-        switch (key->key()) {
-            case Qt::Key_Escape:
-                menuRef_->close();
-                canceled_ = true;
-                return true; // stop event
-
-            case Qt::Key_Enter:
-            case Qt::Key_Return:
-            case Qt::Key_Tab:
-                if (listWidgetRef_->currentItem() && currentWord_ == listWidgetRef_->currentItem()->text()) { // sends normal enter/return/tab if you've typed a full word
-                    menuRef_->close();
-                    QApplication::sendEvent(editorComponentRef_, event);
-                    return true;
-                } else if (listWidgetRef_->currentItem()) {
-                    insertCurrentSelectedListItem();
-                    menuRef_->close();
-                    updateList();
-                    return true;
-                }
-                break;
-
-            case Qt::Key_Backspace:
-                QApplication::sendEvent(editorComponentRef_, event);
-                return true;
-
-            case Qt::Key_Shift: //ignore shift, don't hide
-                QApplication::sendEvent(editorComponentRef_, event);
-                return true;
-
-            // forward special keys to list
-            case Qt::Key_Up:
-            case Qt::Key_Down:
-            case Qt::Key_PageDown:
-            case Qt::Key_PageUp:
-                return false;
-        }
-
-        // default operation is to hide and continue the event
-        menuRef_->close();
-        QApplication::sendEvent(editorComponentRef_, event);
-        return true;
+        return handleAutoCompleteKeyPress(static_cast<QKeyEvent*>(event), false);
 
     }
     return QObject::eventFilter(obj, event);
+}
+
+
+bool TextEditorAutoCompleteComponent::handleAutoCompleteKeyPress(QKeyEvent* key, bool eventFromEditor)
+{
+    if (eventBeingFiltered_) {
+        return false;
+    }
+
+    switch (key->key()) {
+        case Qt::Key_Escape:
+            menuRef_->close();
+            canceled_ = true;
+            return true;
+
+        case Qt::Key_Enter:
+        case Qt::Key_Return:
+        case Qt::Key_Tab:
+            if (listWidgetRef_->currentItem() && currentWord_ == listWidgetRef_->currentItem()->text()) {
+                menuRef_->close();
+                if (eventFromEditor) {
+                    return false;
+                }
+                QApplication::sendEvent(editorComponentRef_, key);
+                return true;
+            } else if (listWidgetRef_->currentItem()) {
+                insertCurrentSelectedListItem();
+                menuRef_->close();
+                updateList();
+                return true;
+            }
+            break;
+
+        case Qt::Key_Up:
+        case Qt::Key_Down:
+        case Qt::Key_PageDown:
+        case Qt::Key_PageUp:
+            eventBeingFiltered_ = true;
+            QApplication::sendEvent(listWidgetRef_, key);
+            eventBeingFiltered_ = false;
+            return true;
+
+        case Qt::Key_Backspace:
+        case Qt::Key_Shift:
+            if (eventFromEditor) {
+                return false;
+            }
+            QApplication::sendEvent(editorComponentRef_, key);
+            return true;
+    }
+
+    if (!key->text().isEmpty()) {
+        const QChar nextChar = key->text().at(0);
+        if (nextChar.isLetterOrNumber()) {
+            if (eventFromEditor) {
+                return false;
+            }
+            QApplication::sendEvent(editorComponentRef_, key);
+            return true;
+        }
+    }
+
+    menuRef_->close();
+    if (eventFromEditor) {
+        return false;
+    }
+    QApplication::sendEvent(editorComponentRef_, key);
+    return true;
 }
 
 
@@ -428,7 +453,7 @@ void TextEditorAutoCompleteComponent::updateList()
     // fills the autocomplete list with the curent word
     if (fillAutoCompleteList(doc, range, currentWord_)) {
         menuRef_->popup(menuRef_->pos());
-        listWidgetRef_->setFocus();
+        editorComponentRef_->setFocus();
 
         // position the widget
         showInfoTip();
