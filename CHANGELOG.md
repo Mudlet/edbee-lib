@@ -1,5 +1,7 @@
 # Changelog
 
+- (2026-09-30) #180, Fix assert when tabbing at the very first offset of a document (@MorquinDevlar)
+
 - (2026-04-14) #177, Fix strange mouse behavior caused by rawLineIndexForYpos returning std::npos with negative y positions. (@distractor)
 - (2026-04-01) #176, Fix FreeBSD Build, CMake find Oniguruma, cmake fixes. (@SlySven)
 
